@@ -83,10 +83,6 @@ def get_extractor_count_by_resource(variable_name):
         return 1
 
 def calculateResourceUsageForRecipe(recipeName, depth = 0):
-    tabs = "  " * depth
-    print(tabs, end="")
-    print(f"{recipeName}")
-
     # Define our base case (prevent infinite loop)
     if recipeName in rawResources:
         # Get the number of extractors for specific resource
@@ -124,10 +120,36 @@ def calculateResourceUsageForRecipe(recipeName, depth = 0):
             # Since we can only make as much as our lowest resource allows return the yield from that
             return min(totalAmounts)
 
+def calculateNeededResourcesForYield(recipeName, amountPerMinute, depth = 0):
+    for i in range(0,depth):
+        print("   ", end="")
+
+    # Define the base case
+    if recipeName in rawResources:
+        print(f"{recipeName}: {amountPerMinute:.2f}/m")
+        return amountPerMinute
+    
+
+    for recipe in recipes:
+        if recipe["name"] == recipeName:
+
+            print(f"{recipeName}: {amountPerMinute:.2f}/m")
+            for subRecipe in recipe["ingredientList"]:
+                # Calculate the needed amount of that ingredient 
+                calculateNeededResourcesForYield(subRecipe["name"], subRecipe["amount"] * amountPerMinute, depth + 1)
+            
+
+
 # Actually start the script
-resourceToMax = "Copper Wire" #input("Name of resource you would like to maximize: ")
+# resourceToMax = input("Name of resource you would like to maximize: ")
+resourceToMax = "Electromagnet" 
+
 
 for recipe in recipes:
     if recipe["name"] == resourceToMax:
-        result = calculateResourceUsageForRecipe(recipe["name"])
-        print(f"{result} / min")
+        maxYield = calculateResourceUsageForRecipe(recipe["name"])
+        print(f"Calculated max yield: {maxYield} / min")
+
+        # Here we are now going to do the reverse and calculate how much of each resource we need to make a desired amount
+        calculateNeededResourcesForYield(resourceToMax, maxYield, 0)
+
