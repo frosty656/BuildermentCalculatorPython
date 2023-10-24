@@ -89,17 +89,45 @@ def calculateResourceUsageForRecipe(recipeName, depth = 0):
 
     # Define our base case (prevent infinite loop)
     if recipeName in rawResources:
-        return
+        # Get the number of extractors for specific resource
+        numberOfExtractors = get_extractor_count_by_resource(recipeName)
 
+        # Get the base production of the extractors
+        baseProduction = numberOfExtractors * 7.5
+
+        # Get the level of the extractor
+        extractorLevel = get_building_level("extractor")
+
+        # Get the output level multiplier
+        levelMultiplier = level_multiplier(extractorLevel)
+
+        # Apply for level multiplier
+        finalProduction = baseProduction * levelMultiplier
+
+        return finalProduction
+
+    # Keep going down the ingredient list
     for recipe in recipes:
         if recipe["name"] == recipeName:
+            # We want to know the potential output given an ingredient
+            totalAmounts = []
             for subRecipe in recipe["ingredientList"]:
-                calculateResourceUsageForRecipe(subRecipe["name"], depth + 1)
+                # Get the amount of the ingredient we can hypothetically get
+                incomingResources = calculateResourceUsageForRecipe(subRecipe["name"], depth + 1)
+
+                # Get the potential yield for the given amount of the ingredient
+                potentialYield = incomingResources / subRecipe["amount"]
+
+                # Add it to the list of potential yields
+                totalAmounts.append(potentialYield)
+            
+            # Since we can only make as much as our lowest resource allows return the yield from that
+            return min(totalAmounts)
 
 # Actually start the script
-resourceToMax = "Electromagnet" #input("Name of resource you would like to maximize: ")
+resourceToMax = "Copper Wire" #input("Name of resource you would like to maximize: ")
 
 for recipe in recipes:
     if recipe["name"] == resourceToMax:
-
-        calculateResourceUsageForRecipe(recipe["name"])
+        result = calculateResourceUsageForRecipe(recipe["name"])
+        print(f"{result} / min")
